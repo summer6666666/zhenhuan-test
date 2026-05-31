@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>「甄嬛传」人物相似度测试</title>
+<meta name="description" content="测一测你和甄嬛传中的谁最像？基于六维人格模型的分析测试。">
+<meta property="og:title" content="「甄嬛传」人物相似度测试">
+<meta property="og:description" content="测一测你在后宫中的真实面目！15道情境题，找到与你最相似的甄嬛传人物。">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @font-face {
+    font-family: 'Palace';
+    src: local('STKaiti'), local('KaiTi'), local('华文楷体'), local('楷体');
+  }
+
+  :root {
+    --bg-dark: #0D0505;
+    --bg-card: rgba(22, 10, 10, 0.92);
+    --gold: #C9A96E;
+    --gold-light: #E8D5A3;
+    --gold-dark: #8B7335;
+    --cream: #FFF8E7;
+    --red-deep: #4A0E0E;
+    --red-crimson: #6B1515;
+    --text-body: #E8DCC8;
+    --text-dim: #8A7A66;
+    --shadow: rgba(0,0,0,0.6);
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'Palace', 'PingFang SC', 'Microsoft YaHei', serif;
+    background: var(--bg-dark);
+    color: var(--text-body);
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── Background ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(100, 30, 20, 0.3) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(50, 15, 10, 0.4) 0%, transparent 50%),
+      radial-gradient(ellipse at 20% 100%, rgba(80, 25, 15, 0.2) 0%, transparent 40%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0l5.77 10H14.23zM0 20l10 5.77V14.23zM40 20l-10 5.77V14.23zM20 40l-5.77-10H25.77z' fill='rgba(201,169,110,0.02)'/%3E%3C/svg%3E");
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .app { position: relative; z-index: 1; height: 100%; width: 100%; }
+
+  /* ── Pages ── */
+  .page {
+    display: none;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+    position: absolute; inset: 0;
+  }
+  .page.active { display: flex; }
+
+  /* ── Welcome Page ── */
+  .welcome-title {
+    font-size: clamp(28px, 6vw, 44px);
+    color: var(--gold);
+    letter-spacing: 6px;
+    text-align: center;
+    text-shadow: 0 0 40px rgba(201,169,110,0.15);
+    margin-bottom: 8px;
+    font-weight: normal;
+  }
+  .welcome-sub {
+    font-size: 14px;
+    color: var(--text-dim);
+    letter-spacing: 4px;
+    margin-bottom: 40px;
+  }
+  .welcome-ornament {
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 16px auto;
+  }
+  .welcome-icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+    opacity: 0.7;
+  }
+  .welcome-desc {
+    text-align: center;
+    line-height: 1.8;
+    color: var(--text-dim);
+    font-size: 14px;
+    max-width: 320px;
+    margin-bottom: 40px;
+  }
+  .welcome-desc strong { color: var(--gold-light); font-weight: normal; }
+
+  /* ── Button ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 48px;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    color: var(--bg-dark);
+    border: none;
+    border-radius: 4px;
+    font-size: 17px;
+    font-family: inherit;
+    letter-spacing: 3px;
+    cursor: pointer;
+    position: relative;
+    transition: all .3s;
+    min-height: 48px;
+  }
+  .btn:active { transform: scale(0.97); opacity: 0.9; }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 12px 40px;
+    font-size: 14px;
+  }
+
+  /* ── Question Page ── */
+  .q-header {
+    width: 100%;
+    max-width: 420px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  .q-progress-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .q-progress-text {
+    font-size: 12px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    letter-spacing: 1px;
+  }
+  .q-progress-bar-wrap {
+    flex: 1;
+    height: 3px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .q-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+    border-radius: 2px;
+    transition: width .5s ease;
+  }
+  .q-number {
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin-top: 16px;
+    text-align: center;
+  }
+  .q-text {
+    font-size: clamp(17px, 4vw, 21px);
+    color: var(--cream);
+    text-align: center;
+    line-height: 1.7;
+    max-width: 400px;
+    margin: 16px auto 24px;
+    min-height: 2.8em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .q-options {
+    width: 100%;
+    max-width: 420px;
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 0 80px;
+  }
+  .q-option {
+    display: block;
+    width: 100%;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    background: var(--bg-card);
+    border: 1px solid rgba(201,169,110,0.15);
+    border-radius: 6px;
+    color: var(--text-body);
+    font-size: 15px;
+    font-family: inherit;
+    line-height: 1.6;
+    text-align: left;
+    cursor: pointer;
+    transition: all .25s;
+    letter-spacing: 0.5px;
+  }
+  .q-option:active {
+    border-color: var(--gold);
+    background: rgba(201,169,110,0.08);
+    transform: scale(0.98);
+  }
+  .q-option.selected {
+    border-color: var(--gold);
+    background: rgba(201,169,110,0.12);
+    box-shadow: 0 0 20px rgba(201,169,110,0.06);
+  }
+  .q-option .opt-label {
+    display: inline-block;
+    width: 22px; height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border: 1px solid rgba(201,169,110,0.3);
+    border-radius: 50%;
+    font-size: 12px;
+    margin-right: 10px;
+    flex-shrink: 0;
+    color: var(--text-dim);
+    transition: all .25s;
+    vertical-align: middle;
+  }
+  .q-option.selected .opt-label {
+    background: var(--gold);
+    color: var(--bg-dark);
+    border-color: var(--gold);
+  }
+  .q-option .opt-text {
+    vertical-align: middle;
+  }
+  .q-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+    padding: 16px 20px 28px;
+    background: linear-gradient(0deg, var(--bg-dark) 60%, transparent);
+    text-align: center;
+    z-index: 5;
+  }
+  .q-footer .btn { width: 100%; max-width: 420px; }
+  .q-footer .btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ── Result Page ── */
+  .result-scroll {
+    width: 100%;
+    max-width: 420px;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px 0 120px;
+  }
+  .result-card {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .result-badge {
+    display: inline-block;
+    padding: 4px 16px;
+    border: 1px solid rgba(201,169,110,0.3);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .result-name {
+    font-size: clamp(36px, 8vw, 52px);
+    color: var(--gold);
+    letter-spacing: 8px;
+    text-shadow: 0 0 40px rgba(201,169,110,0.2);
+    margin-bottom: 4px;
+  }
+  .result-percent {
+    font-size: 20px;
+    color: var(--gold-light);
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+  .result-percent span {
+    font-size: 32px;
+    font-weight: bold;
+  }
+  .result-ornament {
+    width: 80px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 0 auto 16px;
+  }
+  .result-quote {
+    font-style: italic;
+    color: var(--gold);
+    opacity: 0.7;
+    font-size: 15px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+  .result-desc {
+    text-align: left;
+    line-height: 2;
+    color: var(--text-body);
+    font-size: 14px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    padding: 20px 22px;
+    border: 1px solid rgba(201,169,110,0.08);
+    margin-bottom: 20px;
+  }
+  .result-section-title {
+    color: var(--gold);
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-align: center;
+    margin-bottom: 14px;
+    font-weight: normal;
+  }
+
+  /* Radar Chart */
+  .chart-wrap {
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid rgba(201,169,110,0.08);
+    padding: 16px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .chart-wrap canvas {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1/1;
+    max-height: 340px;
+  }
+
+  /* Top 3 */
+  .top3 {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .top3-item {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid rgba(201,169,110,0.08);
+    border-radius: 6px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .top3-item.rank1 {
+    border-color: rgba(201,169,110,0.3);
+    background: rgba(201,169,110,0.06);
+  }
+  .top3-rank {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+  .top3-name {
+    font-size: 16px;
+    color: var(--cream);
+    margin: 4px 0;
+  }
+  .top3-percent {
+    font-size: 13px;
+    color: var(--gold);
+  }
+  .top3-item.rank1 .top3-name { color: var(--gold); font-size: 18px; }
+
+  .result-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 10px;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.85);
+    color: var(--cream);
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 13px;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity .3s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ── Animations ── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .page.active .welcome-title,
+  .page.active .q-text { animation: fadeInUp .5s ease both; }
+  .page.active .q-options .q-option { animation: fadeInUp .4s ease both; }
+  .page.active .q-options .q-option:nth-child(1) { animation-delay: 0.05s; }
+  .page.active .q-options .q-option:nth-child(2) { animation-delay: 0.1s; }
+  .page.active .q-options .q-option:nth-child(3) { animation-delay: 0.15s; }
+  .page.active .q-options .q-option:nth-child(4) { animation-delay: 0.2s; }
+  .page.active .q-options .q-option:nth-child(5) { animation-delay: 0.25s; }
+
+  @keyframes reveal {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .page.active .result-card { animation: reveal .6s ease both; }
+
+  /* ── Replay overlay ── */
+  .replay-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .replay-overlay.show { display: flex; }
+  .replay-dialog {
+    background: var(--bg-card);
+    border: 1px solid rgba(201,169,110,0.2);
+    border-radius: 8px;
+    padding: 32px 24px 24px;
+    max-width: 340px;
+    width: 100%;
+    text-align: center;
+  }
+  .replay-dialog p {
+    margin-bottom: 20px;
+    line-height: 1.8;
+    font-size: 15px;
+  }
+  .replay-dialog .btn { margin: 0 4px; padding: 12px 32px; font-size: 14px; }
+
+  /* ── Scrollbar ── */
+  .q-options::-webkit-scrollbar,
+  .result-scroll::-webkit-scrollbar { width: 2px; }
+  .q-options::-webkit-scrollbar-track,
+  .result-scroll::-webkit-scrollbar-track { background: transparent; }
+  .q-options::-webkit-scrollbar-thumb,
+  .result-scroll::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 2px; }
+
+  /* ── Responsive ── */
+  @media (max-height: 640px) {
+    .page { padding: 12px 16px; }
+    .welcome-title { font-size: 24px; }
+    .welcome-desc { margin-bottom: 20px; }
+    .q-text { font-size: 16px; margin: 8px auto 16px; min-height: 2em; }
+    .q-option { padding: 11px 14px; font-size: 14px; }
+    .q-footer { padding: 10px 16px 16px; }
+    .result-name { font-size: 30px; }
+  }
+  @media (min-width: 500px) {
+    .page { padding: 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ═══ Welcome ═══ -->
+  <div class="page active" id="page-welcome">
+    <div class="welcome-icon">📜</div>
+    <div class="welcome-ornament"></div>
+    <h1 class="welcome-title">甄嬛传·人物鉴</h1>
+    <p class="welcome-sub">—— 人格相似度测试 ——</p>
+    <p class="welcome-desc">
+      后宫深深，你若是其中一员，<br>
+      会是<strong>智谋无双的甄嬛</strong>、<strong>敢爱敢恨的华妃</strong>，<br>
+      还是<strong>深藏不露的皇后</strong>？<br><br>
+      十五道情境题，测出与你最相似的那个「她」。
+    </p>
+    <button class="btn" onclick="startTest()">开始测试</button>
+  </div>
+
+  <!-- ═══ Question ═══ -->
+  <div class="page" id="page-question">
+    <div class="q-header">
+      <div class="q-progress-wrapper">
+        <span class="q-progress-text" id="qProgressText">1/15</span>
+        <div class="q-progress-bar-wrap">
+          <div class="q-progress-bar" id="qProgressBar"></div>
+        </div>
+      </div>
+    </div>
+    <div class="q-number" id="qNumber">第 一 题</div>
+    <div class="q-text" id="qText"></div>
+    <div class="q-options" id="qOptions"></div>
+    <div class="q-footer">
+      <button class="btn" id="qNextBtn" disabled onclick="nextQuestion()">下一题</button>
+    </div>
+  </div>
+
+  <!-- ═══ Result ═══ -->
+  <div class="page" id="page-result">
+    <div class="result-scroll" id="resultScroll">
+      <div class="result-card">
+        <div class="result-badge">✦ 最相似的人物</div>
+        <div class="result-name" id="rName"></div>
+        <div class="result-percent">相似度 <span id="rPercent"></span>%</div>
+        <div class="result-ornament"></div>
+        <div class="result-quote" id="rQuote"></div>
+      </div>
+
+      <div class="result-desc" id="rDesc"></div>
+
+      <div class="chart-wrap">
+        <div class="result-section-title">◈ 六维人格比对 ◈</div>
+        <canvas id="radarChart" width="300" height="300"></canvas>
+        <div style="display:flex;justify-content:center;gap:20px;font-size:12px;color:var(--text-dim);margin-top:6px">
+          <span style="color:var(--gold)">● 你</span>
+          <span style="color:rgba(201,169,110,0.35)">● 角色</span>
+        </div>
+      </div>
+
+      <div class="result-section-title">◈ 排名 ◈</div>
+      <div class="top3" id="rTop3"></div>
+
+      <div class="result-actions">
+        <button class="btn btn-outline" onclick="showReplay()">重新测试</button>
+        <p style="text-align:center;font-size:12px;color:var(--text-dim);letter-spacing:1px;margin-top:4px;">
+          📱 截图即可分享到朋友圈 · 看看朋友是谁
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Replay overlay -->
+  <div class="replay-overlay" id="replayOverlay">
+    <div class="replay-dialog">
+      <p>重新测试将清空当前结果，<br>确定要再来一次吗？</p>
+      <button class="btn" onclick="resetTest()">确定</button>
+      <button class="btn btn-outline" onclick="hideReplay()">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  角色六维数据（1-10 分）
+//  O=心智格局  C=沉隐之力  E=气焰外显
+//  A=仁善之心  N=玲珑心思  P=谋略之才
+// ═══════════════════════════════════════════════════
+const DIMS = ['O','C','E','A','N','P'];
+const DIM_NAMES = { O:'心智格局', C:'沉隐之力', E:'气焰外显', A:'仁善之心', N:'玲珑心思', P:'谋略之才' };
+
+const CHARACTERS = [
+  { name:'甄嬛',   desc:'你心思缜密、智勇双全。善于谋略却不主动伤人，相信实力是最好的护身符。你能在逆境中沉住气等待时机，不轻易表露真实情绪，但内心有坚定的底线。既能在关键时刻挺身而出，也懂得适时退让——这让你成为笑到最后的那个人。',  quote:'「嬛嬛一袅楚宫腰，正是臣女闺名。」',  O:9, C:8, E:5, A:6, N:3, P:9 },
+  { name:'华妃',   desc:'你热烈直接、敢爱敢恨。讨厌虚伪和拐弯抹角，想要什么就大方争取。你的情绪像火焰一样炽热，爱你的人为你的真诚打动，恨你的人则畏惧你的锋芒。你不屑于阴暗角落里的小动作——真正的强者，不需要躲在暗处。',          quote:'「贱人就是矫情！」',                O:4, C:2, E:10,A:2, N:6, P:3 },
+  { name:'皇后·宜修', desc:'你是永远不会把真实想法写在脸上的人。凡事预则立，善于在暗中运筹帷幄。你的耐心远超常人，为达目的可以布局多年。但你内心藏着一道不易察觉的伤痕——有时太善于隐藏，连自己都忘了什么是真心。',             quote:'「臣妾做不到啊！」',                O:8, C:9, E:3, A:2, N:6, P:9 },
+  { name:'沈眉庄', desc:'你有骨气有原则，不屑与世俗同流合污。你看重尊严胜过利益，宁可独善其身也不愿曲意逢迎。你的爱深沉专注，一旦认定便不会改变。你的冷漠是对世界的筛选——留下来的，都是你真正在乎的人。',                    quote:'「宁可枝头抱香死，何曾吹落北风中。」', O:4, C:7, E:3, A:7, N:3, P:2 },
+  { name:'安陵容', desc:'你有着极其敏锐的感知力，能捕捉到别人忽略的细节。你心思细腻、才华横溢，但容易陷入自我怀疑。你渴望被认可、被珍视，一句无心的话可能在你心中掀起巨浪。你需要的不是一个更强大的自己，而是一个安全的港湾。',     quote:'「原是我不配。」',                  O:6, C:4, E:3, A:4, N:9, P:4 },
+  { name:'端妃',   desc:'你话不多，但心里比谁都清楚。不争不抢，不是因为没能力，而是因为看透了太多。你懂得在漫长的等待中保持自己的节奏，不被外界喧嚣干扰。你的坚韧不体现在对抗，而体现在承受——压不垮你的，终将使你更强大。',   quote:'「臣妾身子不适，不能给皇上请安了。」', O:5, C:9, E:2, A:5, N:2, P:5 },
+  { name:'敬妃',   desc:'你是那个在风暴中仍能保持平静的人。你的善良不是软弱，而是清醒的选择。你善于调和矛盾，总能让周围的人感到安心。你不追求光芒万丈，但润物无声的温柔，恰恰是这深宫中最稀缺的力量。',                  quote:'「后宫之中，能有个知己是难得的缘分。」', O:4, C:7, E:4, A:9, N:3, P:3 },
+  { name:'淳贵人', desc:'你身上有种让人不设防的纯粹。热爱生活中简单美好的事物，一块糕点、一朵花就能让你开心一整天。你的真诚不是装出来的——你就是那样简单地相信世界是美好的。你的快乐有感染力，让身边的人都想保护这份美好。',   quote:'「姐姐！姐姐！这个可好吃了！」',      O:3, C:3, E:8, A:8, N:2, P:1 },
+  { name:'叶澜依', desc:'你是一匹独狼，永远不愿被驯服。厌恶规则和束缚，忠于自己的内心胜过一切。你不屑讨好任何人，也不在乎别人怎么看你。你的爱炽烈专一，你的恨坦荡直接。在这世界上，你只听从一个人——你自己内心的声音。',       quote:'「这福气给你，你要不要？」',          O:5, C:3, E:9, A:3, N:4, P:2 },
+  { name:'曹琴默', desc:'你有惊人的适应力和敏锐的局势判断力。懂得在不同人面前展现不同的面孔——这不是虚伪，而是生存智慧。你务实机敏，能在夹缝中找到自己的位置。但在内心深处，你也渴望能有一次，不必再算计。',               quote:'「娘娘息怒，嫔妾也是为娘娘着想。」',  O:8, C:6, E:5, A:3, N:6, P:7 },
+  { name:'祺贵人', desc:'你自信张扬，从不掩饰自己的优越感。相信自己的魅力足以征服一切，不屑与普通人相提并论。你的直接有时会伤到人，但你的骄傲不允许低头道歉。其实张扬背后，藏着一份害怕被忽视的敏感。',                  quote:'「臣妾出身高贵，不比那些小家子气的。」', O:2, C:3, E:8, A:2, N:4, P:2 },
+  { name:'苏培盛', desc:'你是那个在旁看得最清楚的人。深谙人情世故却不滥用这份能力。忠心但不愚忠，圆滑但不油滑。知道什么时候该说话、什么时候该沉默。你的智慧不在于锋芒毕露，而在于——恰到好处。',                       quote:'「奴才在皇上身边伺候久了，多少也学着点。」', O:7, C:8, E:4, A:7, N:2, P:7 },
+];
+
+// ═══════════════════════════════════════════════════
+//  题库（15 题）
+//  effects: { O:±, C:±, E:±, A:±, N:±, P:± }  0-3
+// ═══════════════════════════════════════════════════
+const QUESTIONS = [
+  {
+    text: '若你入选秀女，初次面圣时你会怎么做？',
+    options: [
+      { text: '大方展示才艺，力争留个好印象', effects: { E:2, O:1 } },
+      { text: '低调行事，避免引人注目', effects: { C:2, A:1 } },
+      { text: '暗中观察其他秀女，心中有数', effects: { O:1, P:2 } },
+      { text: '紧张不安，生怕出错', effects: { N:2 } },
+    ]
+  },
+  {
+    text: '一位位份比你高的嫔妃主动向你示好，你会？',
+    options: [
+      { text: '欣然接受，多一个朋友总比多一个敌人好', effects: { A:2, O:1 } },
+      { text: '心存戒备，但面上不显露半分', effects: { C:1, P:2 } },
+      { text: '受宠若惊，真心把她当姐姐看待', effects: { A:1, N:2 } },
+      { text: '觉得她别有用心，保持距离', effects: { P:1, A:-1 } },
+    ]
+  },
+  {
+    text: '无意中听到两个宫女在背后议论你的是非，你会？',
+    options: [
+      { text: '直接走出去当面质问', effects: { E:2, A:-1 } },
+      { text: '记住她们的话，日后再料理', effects: { C:1, P:2 } },
+      { text: '假装没听见，但心里很不舒服', effects: { N:2, C:1 } },
+      { text: '一笑了之，何必同她们计较', effects: { A:2, N:-1 } },
+    ]
+  },
+  {
+    text: '皇上接连数日翻你的牌子，宫里开始有人眼红，你会？',
+    options: [
+      { text: '更加谨慎，不让人抓住把柄', effects: { C:2, P:1 } },
+      { text: '趁热打铁，巩固圣心', effects: { E:1, P:2 } },
+      { text: '有些不安，怕成众矢之的', effects: { N:2, A:1 } },
+      { text: '坦然受之，这是我的本事', effects: { E:2, A:-1 } },
+    ]
+  },
+  {
+    text: '你最好的姐妹告诉你她也怀了身孕，你会？',
+    options: [
+      { text: '真心为她高兴，悉心照料', effects: { A:2, N:-1 } },
+      { text: '为腹中的孩子担忧，怕恩宠被分走', effects: { N:2, P:1 } },
+      { text: '表面道贺，心中五味杂陈', effects: { N:2, C:1 } },
+      { text: '帮她一起筹划，确保母子平安', effects: { A:2, O:1, C:1 } },
+    ]
+  },
+  {
+    text: '被人设计陷害，皇上开始冷落你，你会？',
+    options: [
+      { text: '想尽办法查明真相，洗清冤屈', effects: { C:2, P:2, O:1 } },
+      { text: '伤心欲绝，终日以泪洗面', effects: { N:3 } },
+      { text: '找机会面见皇上，当面陈情', effects: { E:2, O:1 } },
+      { text: '安静等待，让时间证明一切', effects: { C:2, A:1 } },
+    ]
+  },
+  {
+    text: '太后召见你，暗示你家世太盛需懂得收敛，你会？',
+    options: [
+      { text: '恭顺受教，谨记太后教诲', effects: { C:2, A:2 } },
+      { text: '心中不服，但面上恭敬应对', effects: { C:1, P:2 } },
+      { text: '明白太后用意，回去调整行事', effects: { O:2, C:1 } },
+      { text: '感到委屈，家世好也不是我的错', effects: { N:2, A:-1 } },
+    ]
+  },
+  {
+    text: '宫宴上，你发现有人在你酒杯里动了手脚，你会？',
+    options: [
+      { text: '不动声色假装喝了，看谁按捺不住', effects: { O:2, P:3, C:1 } },
+      { text: '当场揭发，请皇上主持公道', effects: { E:2, A:-1 } },
+      { text: '悄悄告诉心腹宫女去暗查', effects: { P:1, C:1, A:1 } },
+      { text: '吓得不敢再碰任何饮食', effects: { N:2, C:-1 } },
+    ]
+  },
+  {
+    text: '你更愿意与以下哪种人结盟？',
+    options: [
+      { text: '位份高但心思单纯的人', effects: { A:2, P:-1 } },
+      { text: '位份不高但足智多谋的人', effects: { O:2, P:2 } },
+      { text: '处境相似、能互相扶持的人', effects: { A:2, N:1 } },
+      { text: '手握实权、能保我周全的人', effects: { P:2, E:1 } },
+    ]
+  },
+  {
+    text: '如果必须选一件"武器"护身，你会选？',
+    options: [
+      { text: '智慧——用计谋化解危机', effects: { O:2, P:2 } },
+      { text: '口才——凭言语说服人心', effects: { E:2, O:1 } },
+      { text: '隐忍——等对手先露破绽', effects: { C:3, P:1 } },
+      { text: '人脉——让盟友鼎力相助', effects: { A:2, P:1 } },
+    ]
+  },
+  {
+    text: '你对"恩宠"这件事怎么看？',
+    options: [
+      { text: '恩宠是立身之本，必须争', effects: { E:2, P:1 } },
+      { text: '双刃之剑，适可而止方为上策', effects: { C:2, O:1, N:-1 } },
+      { text: '得之我幸，不得我命，不强求', effects: { A:2, C:1 } },
+      { text: '我在意实质的权力，而非虚名', effects: { P:3, C:1, E:-1 } },
+    ]
+  },
+  {
+    text: '若不幸被贬入冷宫，你会如何？',
+    options: [
+      { text: '联络旧部，筹划东山再起', effects: { P:3, O:2, C:1 } },
+      { text: '心灰意冷，听天由命', effects: { N:2, C:-2 } },
+      { text: '读书修身，静待转机', effects: { C:2, A:1, N:-1 } },
+      { text: '不惜一切办法求见皇上申辩', effects: { E:2, O:1 } },
+    ]
+  },
+  {
+    text: '以下哪种处世哲学你最认同？',
+    options: [
+      { text: '害人之心不可有，防人之心不可无', effects: { C:1, P:1, A:1 } },
+      { text: '以其人之道，还治其人之身', effects: { E:2, P:2, A:-1 } },
+      { text: '清者自清，浊者自浊', effects: { A:2, C:1, N:-1 } },
+      { text: '识时务者为俊杰', effects: { O:2, P:2, C:1 } },
+    ]
+  },
+  {
+    text: '你发现最信任的人背叛了你，你会？',
+    options: [
+      { text: '给她一个解释的机会', effects: { A:2, O:1 } },
+      { text: '永不原谅，让她付出代价', effects: { E:2, P:1, A:-2 } },
+      { text: '反省自己为何会看错人', effects: { N:2, A:1 } },
+      { text: '从此不再轻易相信任何人', effects: { C:1, P:1, A:-1 } },
+    ]
+  },
+  {
+    text: '如果选一种花代表自己，你会选？',
+    options: [
+      { text: '牡丹——雍容华贵，百花之首', effects: { E:2, P:1 } },
+      { text: '梅花——凌霜傲雪，孤芳自赏', effects: { C:2, A:1, N:1 } },
+      { text: '莲花——出淤泥而不染', effects: { A:2, C:1 } },
+      { text: '竹子——虚怀若谷，坚韧不拔', effects: { C:2, O:1 } },
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════════
+//  State
+// ═══════════════════════════════════════════════════
+let state = {
+  currentQ: 0,
+  answers: [],
+  scores: { O:0, C:0, E:0, A:0, N:0, P:0 },
+};
+
+// ═══════════════════════════════════════════════════
+//  Helpers
+// ═══════════════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showToast(msg, duration=2000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._hide);
+  t._hide = setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ═══════════════════════════════════════════════════
+//  Start
+// ═══════════════════════════════════════════════════
+function startTest() {
+  state.currentQ = 0;
+  state.answers = [];
+  state.scores = { O:0, C:0, E:0, A:0, N:0, P:0 };
+  showPage('page-question');
+  renderQuestion();
+}
+
+// ═══════════════════════════════════════════════════
+//  Render Question
+// ═══════════════════════════════════════════════════
+function renderQuestion() {
+  const idx = state.currentQ;
+  const q = QUESTIONS[idx];
+  const total = QUESTIONS.length;
+
+  document.getElementById('qProgressText').textContent = `${idx+1}/${total}`;
+  document.getElementById('qProgressBar').style.width = `${((idx+1)/total)*100}%`;
+  document.getElementById('qNumber').textContent = `第 ${toChineseNum(idx+1)} 题`;
+  document.getElementById('qText').textContent = q.text;
+
+  const container = document.getElementById('qOptions');
+  container.innerHTML = '';
+  const labels = 'ABCDEFGH';
+  q.options.forEach((opt, oi) => {
+    const btn = document.createElement('button');
+    btn.className = 'q-option';
+    btn.innerHTML = `<span class="opt-label">${labels[oi]}</span><span class="opt-text">${opt.text}</span>`;
+    btn.dataset.index = oi;
+    btn.addEventListener('click', () => selectOption(oi));
+    container.appendChild(btn);
+  });
+
+  document.getElementById('qNextBtn').disabled = true;
+  // scroll to top
+  container.scrollTop = 0;
+}
+
+function toChineseNum(n) {
+  const map = ['零','一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五'];
+  return map[n] || n;
+}
+
+// ═══════════════════════════════════════════════════
+//  Select Option
+// ═══════════════════════════════════════════════════
+function selectOption(index) {
+  const container = document.getElementById('qOptions');
+  container.querySelectorAll('.q-option').forEach((el, i) => {
+    el.classList.toggle('selected', i === index);
+  });
+
+  state.answers[state.currentQ] = index;
+  document.getElementById('qNextBtn').disabled = false;
+}
+
+// ═══════════════════════════════════════════════════
+//  Next Question
+// ═══════════════════════════════════════════════════
+function nextQuestion() {
+  const idx = state.currentQ;
+  const chosen = state.answers[idx];
+  if (chosen === undefined) return;
+
+  // Apply effects
+  const eff = QUESTIONS[idx].options[chosen].effects;
+  for (const dim of DIMS) {
+    if (eff[dim]) {
+      state.scores[dim] += eff[dim];
+    }
+  }
+
+  state.currentQ++;
+  if (state.currentQ >= QUESTIONS.length) {
+    showResult();
+  } else {
+    renderQuestion();
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  Scoring — Cosine Similarity
+// ═══════════════════════════════════════════════════
+function normalizeVector(vec) {
+  const mag = Math.sqrt(vec.reduce((s, v) => s + v*v, 0));
+  return mag === 0 ? vec.map(() => 0) : vec.map(v => v / mag);
+}
+
+function cosineSimilarity(a, b) {
+  if (a.length !== b.length) return 0;
+  let dot = 0;
+  for (let i = 0; i < a.length; i++) dot += a[i] * b[i];
+  return Math.round(dot * 1000) / 1000; // 0–1
+}
+
+function computeResults() {
+  // User raw vector
+  const userRaw = DIMS.map(d => state.scores[d]);
+
+  // Find min/max for scaling
+  const minRaw = Math.min(...userRaw);
+  const maxRaw = Math.max(...userRaw);
+  const range = maxRaw - minRaw || 1;
+
+  // Scale user vector to 1–10
+  const userScaled = userRaw.map(v => ((v - minRaw) / range) * 9 + 1);
+
+  const userNorm = normalizeVector(userScaled);
+
+  // Compute similarity with each character
+  const results = CHARACTERS.map(ch => {
+    const charVec = DIMS.map(d => ch[d]);
+    const charNorm = normalizeVector(charVec);
+    const sim = cosineSimilarity(userNorm, charNorm);
+    return { ...ch, similarity: sim };
+  });
+
+  results.sort((a, b) => b.similarity - a.similarity);
+  return { results, userScaled };
+}
+
+// ═══════════════════════════════════════════════════
+//  Show Result
+// ═══════════════════════════════════════════════════
+function showResult() {
+  const { results, userScaled } = computeResults();
+  const top = results[0];
+
+  showPage('page-result');
+
+  // Top 1
+  document.getElementById('rName').textContent = top.name;
+  document.getElementById('rPercent').textContent = Math.round(top.similarity * 100);
+  document.getElementById('rQuote').textContent = top.quote;
+  document.getElementById('rDesc').textContent = top.desc;
+
+  // Top 3
+  const top3El = document.getElementById('rTop3');
+  top3El.innerHTML = '';
+  const medals = ['❶', '❷', '❸'];
+  results.slice(0, 3).forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'top3-item' + (i === 0 ? ' rank1' : '');
+    div.innerHTML = `
+      <div class="top3-rank">${medals[i]}</div>
+      <div class="top3-name">${r.name}</div>
+      <div class="top3-percent">${Math.round(r.similarity * 100)}%</div>
+    `;
+    top3El.appendChild(div);
+  });
+
+  // Radar chart
+  drawRadar(userScaled, DIMS.map(d => top[d]));
+
+  // Scroll to top
+  document.getElementById('resultScroll').scrollTop = 0;
+}
+
+// ═══════════════════════════════════════════════════
+//  Radar Chart (pure canvas)
+// ═══════════════════════════════════════════════════
+function drawRadar(userVec, charVec) {
+  const canvas = document.getElementById('radarChart');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const size = Math.min(rect.width - 40, 340, window.innerHeight * 0.38);
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = size * 0.4;
+  const n = DIMS.length;
+  const levels = 5;
+  const angleStep = (Math.PI * 2) / n;
+  const startAngle = -Math.PI / 2; // top
+
+  ctx.clearRect(0, 0, size, size);
+
+  // Draw grid levels
+  for (let lv = 1; lv <= levels; lv++) {
+    const lr = r * (lv / levels);
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const angle = startAngle + i * angleStep;
+      const x = cx + lr * Math.cos(angle);
+      const y = cy + lr * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(201,169,110,0.12)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+
+  // Axes and labels
+  for (let i = 0; i < n; i++) {
+    const angle = startAngle + i * angleStep;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = 'rgba(201,169,110,0.1)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+
+    const lx = cx + (r + 16) * Math.cos(angle);
+    const ly = cy + (r + 16) * Math.sin(angle);
+    ctx.fillStyle = 'rgba(232,220,200,0.7)';
+    ctx.font = `${Math.max(10, size * 0.035)}px "Palace", serif`;
+    ctx.textAlign = Math.cos(angle) < -0.1 ? 'right' : Math.cos(angle) > 0.1 ? 'left' : 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(DIM_NAMES[DIMS[i]], lx, ly);
+  }
+
+  // Normalize 1-10 → 0-1
+  const to01 = v => (v - 1) / 9;
+
+  // Draw a filled polygon with outline
+  function drawPolygon(values, fillColor, strokeColor, lineWidth) {
+    const pts = values.map((v, i) => {
+      const angle = startAngle + i * angleStep;
+      const vr = r * Math.max(0, Math.min(1, to01(v)));
+      return {
+        x: cx + vr * Math.cos(angle),
+        y: cy + vr * Math.sin(angle)
+      };
+    });
+
+    // Fill
+    ctx.beginPath();
+    pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+    ctx.closePath();
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+
+    // Stroke
+    ctx.beginPath();
+    pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+    ctx.closePath();
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+
+    return pts;
+  }
+
+  // Draw character polygon (drawn first so it sits under user)
+  const charPts = drawPolygon(charVec, 'rgba(201,169,110,0.06)', 'rgba(201,169,110,0.35)', 1.5);
+
+  // Draw user polygon
+  const userPts = drawPolygon(userVec, 'rgba(201,169,110,0.15)', '#C9A96E', 2.5);
+
+  // Dots on user line
+  userPts.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#C9A96E';
+    ctx.fill();
+  });
+
+  // Center ornament
+  ctx.fillStyle = 'rgba(201,169,110,0.06)';
+  ctx.font = `${size * 0.055}px "Palace", serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('六维', cx, cy);
+}
+
+// ═══════════════════════════════════════════════════
+//  Replay
+// ═══════════════════════════════════════════════════
+function showReplay() {
+  document.getElementById('replayOverlay').classList.add('show');
+}
+function hideReplay() {
+  document.getElementById('replayOverlay').classList.remove('show');
+}
+function resetTest() {
+  hideReplay();
+  startTest();
+}
+
+// ═══════════════════════════════════════════════════
+//  Handle resize for radar
+// ═══════════════════════════════════════════════════
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (document.getElementById('page-result').classList.contains('active')) {
+      const { results, userScaled } = computeResults();
+      drawRadar(userScaled, DIMS.map(d => results[0][d]));
+    }
+  }, 200);
+});
+
+</script>
+</body>
+</html>
